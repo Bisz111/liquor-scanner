@@ -1,1 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquor Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            margin: 0;
+        }
+        .container {
+            padding: 20px;
+        }
+        button {
+            background-color: #3498db;
+            padding: 10px 20px;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .scanner {
+            display: none;
+            margin: 20px;
+        }
+        .scanner input {
+            padding: 10px;
+            font-size: 18px;
+        }
+        .product-info {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Liquor Scanner</h1>
+        <button id="scanButton">Scan Product</button>
+        <div class="scanner" id="scanner">
+            <input type="file" accept="image/*" id="scannerInput" />
+        </div>
+        <div class="product-info" id="productInfo"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+    <script>
+        document.getElementById("scanButton").onclick = function() {
+            document.getElementById("scanner").style.display = "block";
+            document.getElementById("scanButton").style.display = "none";
+        };
+
+        document.getElementById("scannerInput").onchange = async function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const image = new Image();
+                    image.src = e.target.result;
+                    image.onload = async function() {
+                        const barcode = await getBarcodeFromImage(image);
+                        getProductInfo(barcode);
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // Fake function for barcode extraction (can be replaced with a real one)
+        function getBarcodeFromImage(image) {
+            // You can use a library like `quagga` or `jsbarcode` for real barcode scanning
+            return new Promise(resolve => setTimeout(() => resolve("082184002100"), 1000)); // Example UPC for Jack Daniel's
+        }
+
+        async function getProductInfo(upc) {
+            const res = await fetch(`/api/lookup?upc=${upc}`);
+            const data = await res.json();
+            if (data.error) {
+                document.getElementById("productInfo").innerHTML = "<p>Product not found.</p>";
+            } else {
+                document.getElementById("productInfo").innerHTML = `
+                    <h3>${data.title}</h3>
+                    <img src="${data.image}" alt="${data.title}" style="width: 200px;"/>
+                    <p>${data.description}</p>
+                    <p>Price Range: $${data.lowest_price} - $${data.highest_price}</p>
+                    <p>Pairing Suggestions: ${data.pairings}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
 
